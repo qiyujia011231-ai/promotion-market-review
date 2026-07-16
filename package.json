@@ -1,6 +1,6 @@
 {
   "name": "pd-review-dashboard",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "@types/file-saver": "2.0.7",
-    "file-saver": "^2.0.5",
+    "exceljs": "4.4.0",
+    "file-saver": "2.0.5",
     "next": "14.2.23",
     "react": "18.3.1",
     "react-dom": "18.3.1",

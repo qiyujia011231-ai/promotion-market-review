@@ -1,26 +1,32 @@
-# PD大盘复盘 Dashboard
+# PD Review Dashboard
 
-这是一个可直接部署到 Vercel 的 Next.js 网页项目，用于上传大盘源数据 Excel，并按固定的促销大盘复盘模板自动生成 Dashboard 和 Excel 输出。
+这是一个可部署到 Vercel 的 Next.js 项目，用于上传大盘源数据并自动生成“促销大盘复盘模板版 Excel”。
 
-## 已包含功能
+## 已实现
 
-- 上传 `.xlsx / .xls / .csv` 大盘源数据
-- 自动识别字段：`week ending / brand / retail sales / product form / price range / title`
-- 固定 PD 对比：默认 `25PD = 2025-07-12`，`26PD = 2026-06-27`，可在页面修改
-- 自动输出：
-  - 耳机品牌市占变化
-  - 耳机品牌销额变化
-  - 开耳品牌市占变化
-  - 开耳品牌销额变化
-  - 耳机价位段对比
-  - 开耳价位段对比
-  - 耳机价格月度占比变化
-  - 开耳价格月度占比变化
-  - SHOKZ 骨传导品类市占变化
-  - Soundcore 开耳产品销额表现
-  - Soundcore 品线 / 价位段绝对变化与同比变化
-- 支持导出 Excel 报告
-- 已内置 `public/templates/促销大盘复盘模板.xlsx`
+- 上传源数据 Excel
+- 自动识别字段：week ending / brand / retail sales / product form / price range / title
+- PD日期下拉选项直接来自源数据的 `week ending` 字段
+- 生成模板版 Excel，包含图片和表格
+- 内置固定模板：`public/templates/促销大盘复盘模板.xlsx`
+- 价位段口径：低价位=0-80，中价位=80-160，高价位=160+
+- 开耳口径：耳夹 + 耳挂
+
+## 输出内容
+
+- 说明与摘要
+- 大盘品牌市占变化
+- 大盘品牌销额变化
+- 开耳品牌市占变化
+- 开耳品牌销额变化
+- 耳机价位段分布
+- 开耳价位段分布
+- 耳机价格月度占比
+- 开耳价格月度占比
+- SHOKZ骨传导市占
+- 重点品牌开耳产品表现
+- 重点品牌品线/价位段绝对变化
+- 重点品牌品线/价位段同比变化
 
 ## 本地运行
 
@@ -29,39 +35,39 @@ npm install
 npm run dev
 ```
 
-然后打开：
+打开：
 
 ```text
 http://localhost:3000
 ```
 
-## 部署到 Vercel
+## Vercel 部署设置
 
-1. 在 GitHub 新建仓库，例如 `pd-review-dashboard`
-2. 将本项目文件上传到 GitHub
-3. 登录 Vercel，点击 `Add New -> Project`
-4. 选择该 GitHub 仓库并导入
-5. Framework Preset 选择 `Next.js`
-6. 点击 `Deploy`
-
-## 数据字段建议
-
-源数据建议包含以下字段，字段名可以是英文或中文，系统会做模糊识别：
-
-| 维度 | 推荐字段名 |
+| 配置项 | 设置 |
 |---|---|
-| 日期 | week ending / date / 日期 |
-| 品牌 | brand / 品牌 |
-| 销额 | retail sales / sales / 销额 / 销售额 |
-| 标题 | title / product title / 商品标题 / 标题 |
-| 品线 | product form / 品线 / 产品形态 / 品类 |
-| 价位段 | price range / 价格段 / 价位段 |
+| Framework Preset | Next.js |
+| Root Directory | ./ |
+| Install Command | npm install |
+| Build Command | npm run build |
+| Output Directory | 留空 |
 
-## 固定口径
+## GitHub 上传注意
 
-- 开耳 = 耳夹 + 耳挂
-- 低价位 = 0-80
-- 中价位 = 80-160
-- 高价位 = 160+
-- 核心指标 = Retail Sales
-- 品牌图默认展示 26PD 销额 Top 10
+仓库根目录必须直接看到：
+
+```text
+app/
+components/
+lib/
+public/
+package.json
+next.config.mjs
+tsconfig.json
+vercel.json
+```
+
+不要只上传 zip 文件本身，也不要让这些文件夹被拆散。
+
+## 说明
+
+当前版本在浏览器端完成 Excel 解析、图表图片生成、模板读取和 Excel 导出。这样可以避免 Vercel 服务端上传大文件限制，更适合 20MB+ 的大盘源数据。
