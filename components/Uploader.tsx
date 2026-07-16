@@ -16,6 +16,7 @@ export default function Uploader() {
   const [config, setConfig] = useState(defaultConfig);
   const [error, setError] = useState('');
   const [fileName, setFileName] = useState('');
+  const [exporting, setExporting] = useState(false);
   const report: ReportData | null = useMemo(() => rows.length ? buildReport(rows, config) : null, [rows, config]);
 
   async function handleFile(file?: File) {
@@ -26,6 +27,10 @@ export default function Uploader() {
       const parsed = await parseWorkbook(file);
       if (!parsed.length) throw new Error('没有读取到有效数据。');
       setRows(parsed);
+      const dates = Array.from(new Set(parsed.map(r => r.weekEnding))).sort();
+      const next25 = dates.includes(defaultConfig.pd25) ? defaultConfig.pd25 : dates[0] || defaultConfig.pd25;
+      const next26 = dates.includes(defaultConfig.pd26) ? defaultConfig.pd26 : dates[dates.length - 1] || defaultConfig.pd26;
+      setConfig(prev => ({ ...prev, pd25: next25, pd26: next26 }));
     } catch (e) {
       setError(e instanceof Error ? e.message : '读取失败');
       setRows([]);
@@ -34,27 +39,44 @@ export default function Uploader() {
 
   const availableDates = useMemo(() => Array.from(new Set(rows.map(r => r.weekEnding))).sort(), [rows]);
 
+  async function handleExport() {
+    if (!report) return;
+    setExporting(true);
+    setError('');
+    try {
+      await exportReport(report);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '导出Excel失败');
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return <div className="grid">
     <section className="card">
       <div className="upload">
         <input type="file" accept=".xlsx,.xls,.csv" onChange={e => handleFile(e.target.files?.[0])} />
-        <button className="secondary" onClick={() => report && exportReport(report)} disabled={!report}>导出Excel报告</button>
+        <button className="secondary" onClick={handleExport} disabled={!report || exporting}>{exporting ? '正在生成Excel...' : '生成模板版Excel'}</button>
         <a className="linkButton secondary" href="/templates/促销大盘复盘模板.xlsx" download>下载固定模板</a>
         {fileName ? <span className="badge">已读取：{fileName}</span> : null}
       </div>
       <div className="controls">
         <label>25PD日期
-          <input value={config.pd25} list="dates" onChange={e => setConfig({ ...config, pd25: e.target.value })} />
+          <select value={config.pd25} onChange={e => setConfig({ ...config, pd25: e.target.value })} disabled={!availableDates.length}>
+            {!availableDates.length ? <option value={config.pd25}>{config.pd25}</option> : availableDates.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
         </label>
         <label>26PD日期
-          <input value={config.pd26} list="dates" onChange={e => setConfig({ ...config, pd26: e.target.value })} />
+          <select value={config.pd26} onChange={e => setConfig({ ...config, pd26: e.target.value })} disabled={!availableDates.length}>
+            {!availableDates.length ? <option value={config.pd26}>{config.pd26}</option> : availableDates.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
         </label>
         <label>重点品牌
           <input value={config.brand} onChange={e => setConfig({ ...config, brand: e.target.value.toUpperCase() })} />
         </label>
-        <datalist id="dates">{availableDates.map(d => <option key={d} value={d} />)}</datalist>
+
       </div>
-      {error ? <p className="warn" style={{ marginTop: 14 }}>{error}</p> : <p className="footerNote">字段会自动识别：week ending / brand / retail sales / product form / price range / title。价位段：0-80、80-160、160+；开耳：耳夹+耳挂。</p>}
+      {error ? <p className="warn" style={{ marginTop: 14 }}>{error}</p> : <p className="footerNote">字段会自动识别：week ending / brand / retail sales / product form / price range / title。PD日期下拉选项直接来自源数据的 week ending 字段。价位段：0-80、80-160、160+；开耳：耳夹+耳挂。</p>}
     </section>
 
     {!report ? <section className="card"><h2>开始使用</h2><p>上传“大盘源数据”Excel，即可自动生成品牌市占、销额变化、价格段分布、月度价格结构、SHOKZ骨传导市占、Soundcore开耳产品拆解等图表。代码已经按 Vercel + Next.js 结构生成。</p></section> : <Dashboard report={report} />}
